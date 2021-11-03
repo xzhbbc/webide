@@ -1,0 +1,15 @@
+.menu {
+  width: 100%;
+  position: relative;
+  z-index: 100;
+  &-top {
+    width: 100%;
+    height: 30px;
+    text-align: center;
+    line-height: 30px;
+    color: #fff;
+    background: #00C2FA;
+    cursor: pointer;
+    user-select: none;
+  }
+}

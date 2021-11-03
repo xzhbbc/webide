@@ -1,0 +1,109 @@
+/**
+ * 三角形
+ * @param type up/down/left/right
+ * @param transparentWide 透明的长度
+ * @param wide 三角的长
+ * @colors colors 颜色
+ * eg:  @include triangle('down', 8px, 12px, $color-normal);
+ */
+@mixin triangle($type, $transparentWide, $wide, $colors) {
+  width: 0;
+  height: 0;
+  @if $type == 'up' {
+    border-left: $transparentWide solid transparent;
+    border-right: $transparentWide solid transparent;
+    border-bottom: $wide solid $colors;
+  } @else if ($type == 'down') {
+    border-left: $transparentWide solid transparent;
+    border-right: $transparentWide solid transparent;
+    border-top: $wide solid $colors;
+  } @else if ($type == 'left') {
+    border-top: $transparentWide solid transparent;
+    border-right: $wide solid $colors;
+    border-bottom: $transparentWide solid transparent;
+  } @else if ($type == 'right') {
+    border-top: $transparentWide solid transparent;
+    border-left: $wide solid $colors;
+    border-bottom: $transparentWide solid transparent;
+  }
+}
+
+/**
+ * Mixes a color with black. It's different from darken()
+ *
+ * @param {color} $color
+ * @param {number (percentage)} $percent [The amount of black to be mixed in]
+ * @return {color}
+ *
+ * @example
+ *   .element {
+ *     background-color: shade(#ffbb52, 60%);
+ *   }
+ *
+ *   // CSS Output
+ *   .element {
+ *     background-color: #664a20;
+ *   }
+ */
+@function shade($color, $percent) {
+  @return mix(#000, $color, $percent);
+}
+
+// 文本格式化超出省略号  参数：宽度，单行/多行
+@mixin text-overflow($width: null, $row: 1) {
+  @if $width != null {
+    width: $width;
+  }
+  @if $row == 1 {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  } @else {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: $row;
+    overflow: hidden;
+  }
+}
+
+@mixin flexDirection($direction: column, $justifyContent: flex-start, $alignItems: center) {
+  display: flex;
+  flex-direction: $direction;
+  align-items: $alignItems;
+  justify-content: $justifyContent;
+}
+
+@mixin absolute-center($pos: absolute) {
+  position: $pos;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@mixin flex-center() {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin dashed($marginTop: 20px) {
+  width: 100%;
+  height: 2px;
+  background-image: linear-gradient(to right, $colE7 0%, $colE7 50%, transparent 50%);
+  background-size: 20px 1px;
+  background-repeat: repeat-x;
+  margin-top: $marginTop;
+}
+
+@mixin lamp-clamp($line) {
+  /*postcss-pxtransform rn eject enable*/
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: $line;
+  /*! autoprefixer: ignore next */
+  -webkit-box-orient: vertical;
+  /*postcss-pxtransform rn eject disable*/
+  word-break: break-all; //解决纯数字不换行
+}

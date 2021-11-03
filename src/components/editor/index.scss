@@ -1,0 +1,17 @@
+.editorWrap {
+  position: relative;
+  &-tip {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    width: 70px;
+    height: 30px;
+    text-align: center;
+    line-height: 30px;
+    color: #fff;
+    z-index: 9999;
+    border-radius: 50px;
+    background: #00C2FA;
+    user-select: none;
+  }
+}
