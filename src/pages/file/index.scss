@@ -1,0 +1,26 @@
+@import "src/style/mixin.scss";
+@import "src/style/theme.scss";
+.fileContainer {
+  width: 100%;
+  height: 100vh;
+  background: rgb(38, 41, 46);
+  padding: 50px 100px;
+  &-titleContainer {
+    width: 100%;
+    @include flexDirection(row, space-between, center);
+    &-title {
+      font-size: 24px;
+      color: #ccc;
+    }
+    &-btn {
+      width: 60px;
+      height: 20px;
+      border-radius: 10px;
+      background: $theme;
+      text-align: center;
+      line-height: 20px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+  }
+}

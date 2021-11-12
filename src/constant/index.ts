@@ -1,6 +1,4 @@
-export const initHtmlTmp = `<template>
-    <div></div>
-</template>`
+export const initHtmlTmp = (inner: string) => `<template>${inner}</template>`
 
 export const initJsTmp = `export default {
     data() {

@@ -3,6 +3,13 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import Editor from '@/components/editor'
 import { initHtmlTmp, initJsTmp } from '@/constant'
 import Menu from '@/components/menu'
+import { useLocation } from 'umi'
+import { get } from '@/api/request'
+import { CodeType } from '@/type/file.type'
+import Loading from '@/utils/Loading'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { MicroAppWithMemoHistory } from 'umi'
 
 enum ActiveMove {
   LEFT,
@@ -16,6 +23,9 @@ let isMove = false
 const speed = 0.6
 let activeType = -1
 export default function IndexPage() {
+  const [htmlCode, setHtmlCode] = useState('')
+  const [jsCode, setJsCode] = useState('')
+  const [cssCode, setCssCode] = useState('')
   const [leftWidth, setLeftWidth] = useState(132)
   const [rightWidth, setRightWidth] = useState(400)
   const [midMove, setMidMove] = useState(300)
@@ -36,7 +46,9 @@ export default function IndexPage() {
   const midUpDomRef = useRef<HTMLDivElement>(null)
   const rightDomRef = useRef<HTMLDivElement>(null)
   // const [leftMove, setLeftMove] = useState(0)
-
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const { query } = useLocation()
   const handlerMove = useCallback((e: MouseEvent) => {
     if (!isMove) return
     const disX = e.pageX - startX
@@ -141,6 +153,42 @@ export default function IndexPage() {
     }
   })
 
+  const getCode = async (name: string) => {
+    Loading.showLoading()
+    const data = await get<CodeType>('/file/getCode', {
+      name
+    })
+    if (data.code === 0) {
+      const template = data.data.template
+      const js = data.data.script
+      setHtmlCode(
+        initHtmlTmp(
+          template.replaceAll(
+            '\n',
+            `
+`
+          )
+        )
+      )
+      setJsCode(
+        js.replaceAll(
+          '\n',
+          `
+`
+        )
+      )
+      setCssCode('')
+    }
+    console.log(data)
+    Loading.closeLoading()
+  }
+
+  useEffect(() => {
+    if (query?.name) {
+      getCode(query.name)
+    }
+  }, [query])
+
   return (
     <div className="container">
       <div
@@ -180,7 +228,7 @@ export default function IndexPage() {
           ref={midUpDomRef}>
           <Editor
             language="html"
-            initCode={initHtmlTmp}
+            initCode={htmlCode}
             width={upScale.width}
             height={rightScale.height}
             isDark={isDark}
@@ -193,7 +241,7 @@ export default function IndexPage() {
         <div ref={midDomRef} className="container-mid-down">
           <Editor
             language="javascript"
-            initCode={initJsTmp}
+            initCode={jsCode}
             width={midScale.width}
             height={midScale.height}
             isDark={isDark}
@@ -219,13 +267,21 @@ export default function IndexPage() {
             width={rightScale.width}
             height={rightScale.height}
             isDark={isDark}
+            initCode={cssCode}
           />
           <div
             onMouseDown={onMouseDownMid}
             className="container-right-up-split-mid"
           />
         </div>
-        <div className="container-mid-down" />
+        <div className="container-mid-down">
+          <iframe
+            scrolling="no"
+            frameBorder="0"
+            src={`//localhost:3000/${query?.name}.html`}
+            className="iframe"
+          />
+        </div>
         <div onMouseDown={onMouseDownRight} className="container-right-split" />
       </div>
     </div>

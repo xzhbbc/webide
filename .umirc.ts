@@ -13,7 +13,13 @@ export default defineConfig({
     type: 'none',
   },
   routes: [
-    { path: '/', component: '@/pages/index' },
+    { path: '/', component: '@/pages/file/index' },
+    { path: '/code', component: '@/pages/index', routes: [
+        {
+          path: '/',
+          microApp: 'vue'
+        }
+      ] }
   ],
   // mfsu: {},
   fastRefresh: {},

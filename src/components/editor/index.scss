@@ -1,3 +1,4 @@
+@import "src/style/theme.scss";
 .editorWrap {
   position: relative;
   &-tip {
@@ -11,7 +12,7 @@
     color: #fff;
     z-index: 9999;
     border-radius: 50px;
-    background: #00C2FA;
+    background: $theme;
     user-select: none;
   }
 }
