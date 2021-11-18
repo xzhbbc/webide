@@ -22,6 +22,7 @@ export default defineConfig({
       ] }
   ],
   // mfsu: {},
+  antd: {},
   fastRefresh: {},
   sass: {},
   chainWebpack

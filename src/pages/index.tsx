@@ -1,15 +1,18 @@
 import './index.scss'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Editor from '@/components/editor'
-import { initHtmlTmp, initJsTmp } from '@/constant'
+import { initHtmlTmp, initJsTmp, warpCss, warpJs } from '@/constant'
 import Menu from '@/components/menu'
 import { useLocation } from 'umi'
-import { get } from '@/api/request'
-import { CodeType } from '@/type/file.type'
+import { get, post } from '@/api/request'
+import { Catalog, CodeType } from '@/type/file.type'
 import Loading from '@/utils/Loading'
+import { Tree } from 'antd'
+import { DownOutlined } from '@ant-design/icons'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { MicroAppWithMemoHistory } from 'umi'
+import { DataNode, EventDataNode } from 'rc-tree/lib/interface'
 
 enum ActiveMove {
   LEFT,
@@ -26,7 +29,10 @@ export default function IndexPage() {
   const [htmlCode, setHtmlCode] = useState('')
   const [jsCode, setJsCode] = useState('')
   const [cssCode, setCssCode] = useState('')
-  const [leftWidth, setLeftWidth] = useState(132)
+  const [editorHtmlCode, setEditorHtmlCode] = useState('')
+  const [editorJsCode, setEditorJsCode] = useState('')
+  const [editorCssCode, setEditorCssCode] = useState('')
+  const [leftWidth, setLeftWidth] = useState(200)
   const [rightWidth, setRightWidth] = useState(400)
   const [midMove, setMidMove] = useState(300)
   const [midScale, setMidScale] = useState({
@@ -42,13 +48,19 @@ export default function IndexPage() {
     height: 0
   })
   const [isDark, setIsDark] = useState(true)
+  const [treeData, setTreeData] = useState<Catalog[]>([])
+  const [openKey, setOpenKey] = useState<string[]>([])
+  const [selectKey, setSelectKey] = useState('')
+  const [path, setPath] = useState('')
   const midDomRef = useRef<HTMLDivElement>(null)
   const midUpDomRef = useRef<HTMLDivElement>(null)
   const rightDomRef = useRef<HTMLDivElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
   // const [leftMove, setLeftMove] = useState(0)
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const { query } = useLocation()
+
   const handlerMove = useCallback((e: MouseEvent) => {
     if (!isMove) return
     const disX = e.pageX - startX
@@ -73,12 +85,38 @@ export default function IndexPage() {
     isMove = false
   }, [])
 
+  const watchWindowSize = useCallback(() => {
+    if (midDomRef && midDomRef.current) {
+      console.log(midDomRef.current.offsetWidth, midDomRef.current.offsetHeight)
+      setMidScale({
+        width: midDomRef.current.offsetWidth,
+        height: midDomRef.current.offsetHeight
+      })
+    }
+    if (midUpDomRef && midUpDomRef.current) {
+      // console.log(midUpDomRef.current.offsetWidth, midUpDomRef.current.offsetHeight)
+      setUpScale({
+        width: midUpDomRef.current.offsetWidth,
+        height: midUpDomRef.current.offsetHeight
+      })
+    }
+    if (rightDomRef && rightDomRef.current) {
+      // console.log(midUpDomRef.current.offsetWidth, midUpDomRef.current.offsetHeight)
+      setRightScale({
+        width: rightDomRef.current.offsetWidth,
+        height: rightDomRef.current.offsetHeight
+      })
+    }
+  }, [])
+
   useEffect(() => {
     window.addEventListener('mouseup', handlerUp)
     window.addEventListener('mousemove', handlerMove)
+    window.addEventListener('resize', watchWindowSize)
     return () => {
       window.removeEventListener('mouseup', handlerUp)
       window.removeEventListener('mousemove', handlerMove)
+      window.addEventListener('resize', watchWindowSize)
     }
   }, [])
 
@@ -135,13 +173,30 @@ export default function IndexPage() {
     setIsDark(!isDark)
   }, [isDark])
 
-  const handlerKeyDown = (e: KeyboardEvent) => {
+  const handlerKeyDown = async (e: KeyboardEvent) => {
     if (
       (e.key == 's' || e.key == 'S') &&
       (navigator.userAgent.match('Mac') ? e.metaKey : e.ctrlKey)
     ) {
       e.preventDefault()
       console.log('保存中。。。')
+      console.log(editorHtmlCode)
+      console.log(warpJs(editorJsCode))
+      console.log(editorCssCode)
+      if (!query?.path) alert('获取不到文件')
+      Loading.showLoading()
+      const setCode = await post('/file/setCode', {
+        html: editorHtmlCode,
+        script: warpJs(editorJsCode),
+        css: warpCss(editorCssCode),
+        name: query.name
+      })
+      console.log(setCode)
+      Loading.closeLoading()
+      // iframeRef?.current?.contentWindow?.location.reload()
+      console.log(iframeRef.current?.src)
+      window.open(iframeRef.current?.src, 'refresh_name', '')
+      getCode(query.path)
       // alert('监听到ctrl+s')
     }
   }
@@ -151,7 +206,7 @@ export default function IndexPage() {
     return () => {
       document.removeEventListener('keydown', handlerKeyDown)
     }
-  })
+  }, [editorHtmlCode, editorJsCode, editorCssCode])
 
   const getCode = async (name: string) => {
     Loading.showLoading()
@@ -159,8 +214,8 @@ export default function IndexPage() {
       name
     })
     if (data.code === 0) {
-      const template = data.data.template
-      const js = data.data.script
+      // eslint-disable-next-line prefer-const
+      let { template, script, css } = data.data
       setHtmlCode(
         initHtmlTmp(
           template.replaceAll(
@@ -170,25 +225,135 @@ export default function IndexPage() {
           )
         )
       )
+      // console.log()
+      if (script.indexOf('\n') === 0) {
+        script = script.replace('\n', '')
+      }
       setJsCode(
-        js.replaceAll(
+        script.replaceAll(
           '\n',
           `
 `
         )
       )
-      setCssCode('')
+      if (css.indexOf('\n') === 0) {
+        css = css.replace('\n', '')
+      }
+      setCssCode(
+        css.replaceAll(
+          '\n',
+          `
+`
+        )
+      )
+      setEditorHtmlCode(initHtmlTmp(template))
+      setEditorJsCode(script)
+      setEditorCssCode(css)
     }
     console.log(data)
     Loading.closeLoading()
   }
 
+  const getFileCatalog = async () => {
+    const data = await get<Catalog[]>('/file/getCatalog', {})
+    console.log(data)
+    if (data.code == 0) {
+      // data.data.map(item => {
+      //
+      // })
+      const findItemFile = data.data.find(item => item.name == 'src')
+      const findItemView = findItemFile?.children?.find(
+        item => item.name == 'views'
+      )
+      const findFile = findItemView?.children?.find(
+        item => item.name == query?.name
+      )
+      if (findFile) {
+        if (findFile?.children) {
+          setSelectKey(`${findFile.children[0].key}`)
+        }
+        setOpenKey([findFile.key])
+      }
+      setTreeData(data.data)
+    }
+  }
+
   useEffect(() => {
-    if (query?.name) {
-      getCode(query.name)
+    if (query?.path) {
+      getCode(query.path)
+      getFileCatalog()
     }
   }, [query])
 
+  const setHtml = useCallback(
+    (code: string) => {
+      // console.log('changeHtml', code, editorCode)
+      setEditorHtmlCode(code)
+    },
+    [editorHtmlCode]
+  )
+
+  const setScript = useCallback(
+    (code: string) => {
+      setEditorJsCode(code)
+    },
+    [editorJsCode]
+  )
+
+  const setCss = useCallback(
+    (code: string) => {
+      setEditorCssCode(code)
+    },
+    [editorCssCode]
+  )
+
+  const getPath = (key: string, cate: Catalog[]) => {
+    let treePath = ''
+    cate.forEach((item, i) => {
+      const secKey = item.key
+      if (key.indexOf(secKey) > -1) {
+        if (item.children) {
+          getPath(key, item.children)
+        } else {
+          console.log(item.name, key, item.key)
+          treePath = item.name
+        }
+      }
+    })
+    return treePath
+    // treeData
+  }
+
+  const selectFile = (
+    keys: any,
+    info: {
+      event: 'select'
+      selected: boolean
+      node: EventDataNode
+      selectedNodes: DataNode[]
+      nativeEvent: MouseEvent
+    }
+  ) => {
+    console.log('selected', keys, info, treeData)
+    const getFileKey = info.node.key
+    setSelectKey(`${getFileKey}`)
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const getPathInfo = info.node as {
+      type: string
+      path: string
+    }
+    if (getPathInfo.type === 'file') {
+      history.replaceState(
+        {},
+        '',
+        `/code?name=${query.name}&path=${getPathInfo.path}`
+      )
+      getCode(getPathInfo.path)
+    }
+  }
+
+  console.log(openKey, 'openKey')
   return (
     <div className="container">
       <div
@@ -197,6 +362,21 @@ export default function IndexPage() {
           width: leftWidth
         }}>
         <Menu changeTheme={changeTheme} />
+        {treeData && treeData.length > 0 && (
+          <Tree
+            className="container-left-tree"
+            showLine
+            switcherIcon={<DownOutlined />}
+            checkStrictly
+            defaultExpandedKeys={openKey}
+            selectedKeys={[selectKey]}
+            // expandedKeys={openKey}
+            // expandedKeys={['0-10']}
+            // autoExpandParent
+            onSelect={selectFile}
+            treeData={treeData}
+          />
+        )}
         <div
           // onMouseMove={onMouseMove}
           onMouseDown={onMouseDownLeft}
@@ -229,6 +409,7 @@ export default function IndexPage() {
           <Editor
             language="html"
             initCode={htmlCode}
+            callback={setHtml}
             width={upScale.width}
             height={rightScale.height}
             isDark={isDark}
@@ -242,6 +423,7 @@ export default function IndexPage() {
           <Editor
             language="javascript"
             initCode={jsCode}
+            callback={setScript}
             width={midScale.width}
             height={midScale.height}
             isDark={isDark}
@@ -264,6 +446,7 @@ export default function IndexPage() {
           className="container-mid-up">
           <Editor
             language="css"
+            callback={setCss}
             width={rightScale.width}
             height={rightScale.height}
             isDark={isDark}
@@ -276,10 +459,13 @@ export default function IndexPage() {
         </div>
         <div className="container-mid-down">
           <iframe
-            scrolling="no"
+            allowFullScreen={true}
             frameBorder="0"
+            sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-popups allow-modals allow-forms allow-top-navigation allow-presentation"
             src={`//localhost:3000/${query?.name}.html`}
             className="iframe"
+            ref={iframeRef}
+            name="refresh_name"
           />
         </div>
         <div onMouseDown={onMouseDownRight} className="container-right-split" />

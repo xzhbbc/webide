@@ -7,7 +7,7 @@ type ResponseData<T> = {
 }
 
 axios.defaults.baseURL = '//localhost:3000'
-axios.defaults.timeout = 10000
+axios.defaults.timeout = 50000
 
 axios.interceptors.request.use(config => {
   const token = window.localStorage.getItem('token') || ''

@@ -19,6 +19,17 @@
       background: #000;
       z-index: 10000;
     }
+    &-tree {
+      width: calc(100% - 5px);
+      position: absolute;
+      left: 0;
+      z-index: 100;
+      overflow: auto;
+      height: 100vh;
+      .ant-tree {
+        width: calc(100% - 5px);
+      }
+    }
   }
   &-mid {
     position: absolute;

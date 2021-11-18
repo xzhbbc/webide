@@ -5,6 +5,7 @@ import FileItem from '@/components/fileItem'
 import Loading from '@/utils/Loading'
 import { get } from '@/api/request'
 import { FileType } from '@/type/file.type'
+import * as path from 'path'
 
 export default function FilePage() {
   const [isCreate, setIsCreate] = useState(false)
@@ -36,8 +37,8 @@ export default function FilePage() {
     Loading.closeLoading()
   }
 
-  const goCode = useCallback((name: string) => {
-    history.push(`/code?name=${name}`)
+  const goCode = useCallback((name: string, path: string) => {
+    history.push(`/code?name=${name}&path=${path}`)
   }, [])
 
   return (
@@ -52,13 +53,16 @@ export default function FilePage() {
           创建
         </div>
       </div>
-      {isCreate && <FileItem createCallback={createFile} modelName="" />}
+      {isCreate && (
+        <FileItem path="" createCallback={createFile} modelName="" />
+      )}
       {fileList.map(item => (
         <FileItem
           key={item.fileName}
           fileName={item.fileName}
           modelName={item.modelName}
           callback={goCode}
+          path={item.path}
         />
       ))}
     </div>

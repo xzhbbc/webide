@@ -8,19 +8,21 @@ type IProps = {
   language: 'javascript' | 'css' | 'html'
   initCode?: string
   isDark?: boolean
+  callback: (code: string) => void
 }
-
 const Editor: React.FC<IProps> = ({
   width,
   height,
   language,
   initCode,
-  isDark = true
+  isDark = true,
+  callback
 }) => {
   const [code, setCode] = useState('')
 
   const changeCode = (newVal: string, e: any) => {
     console.log(newVal, e, 'changeCode', e.isUndoing)
+    callback(newVal)
     setCode(newVal)
   }
 
