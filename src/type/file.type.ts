@@ -2,6 +2,7 @@ export type FileType = {
   fileName: string
   modelName: string
   path: string
+  parent: string
 }
 
 export type CodeType = {

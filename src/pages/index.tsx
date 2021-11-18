@@ -52,6 +52,7 @@ export default function IndexPage() {
   const [openKey, setOpenKey] = useState<string[]>([])
   const [selectKey, setSelectKey] = useState('')
   const [path, setPath] = useState('')
+  const [iframeView, setIframeView] = useState('')
   const midDomRef = useRef<HTMLDivElement>(null)
   const midUpDomRef = useRef<HTMLDivElement>(null)
   const rightDomRef = useRef<HTMLDivElement>(null)
@@ -173,6 +174,10 @@ export default function IndexPage() {
     setIsDark(!isDark)
   }, [isDark])
 
+  const reloadIframe = () => {
+    window.open(iframeRef.current?.src, 'refresh_name', '')
+  }
+
   const handlerKeyDown = async (e: KeyboardEvent) => {
     if (
       (e.key == 's' || e.key == 'S') &&
@@ -189,14 +194,13 @@ export default function IndexPage() {
         html: editorHtmlCode,
         script: warpJs(editorJsCode),
         css: warpCss(editorCssCode),
-        name: query.name
+        name: query.path
       })
       console.log(setCode)
       Loading.closeLoading()
       // iframeRef?.current?.contentWindow?.location.reload()
-      console.log(iframeRef.current?.src)
-      window.open(iframeRef.current?.src, 'refresh_name', '')
       getCode(query.path)
+      reloadIframe()
       // alert('监听到ctrl+s')
     }
   }
@@ -283,6 +287,9 @@ export default function IndexPage() {
       getCode(query.path)
       getFileCatalog()
     }
+    if (query?.name) {
+      setIframeView(query.name)
+    }
   }, [query])
 
   const setHtml = useCallback(
@@ -342,18 +349,23 @@ export default function IndexPage() {
     const getPathInfo = info.node as {
       type: string
       path: string
+      parent: string
     }
     if (getPathInfo.type === 'file') {
+      const getParentFileList = getPathInfo.parent.split('/')
+      const viewName = getParentFileList[getParentFileList.length - 1]
+      setIframeView(viewName)
       history.replaceState(
         {},
         '',
-        `/code?name=${query.name}&path=${getPathInfo.path}`
+        `/code?name=${viewName}&path=${getPathInfo.path}`
       )
       getCode(getPathInfo.path)
+      reloadIframe()
     }
   }
 
-  console.log(openKey, 'openKey')
+  console.log(query, 'query')
   return (
     <div className="container">
       <div
@@ -458,15 +470,17 @@ export default function IndexPage() {
           />
         </div>
         <div className="container-mid-down">
-          <iframe
-            allowFullScreen={true}
-            frameBorder="0"
-            sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-popups allow-modals allow-forms allow-top-navigation allow-presentation"
-            src={`//localhost:3000/${query?.name}.html`}
-            className="iframe"
-            ref={iframeRef}
-            name="refresh_name"
-          />
+          {iframeView && (
+            <iframe
+              allowFullScreen={true}
+              frameBorder="0"
+              sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-popups allow-modals allow-forms allow-top-navigation allow-presentation"
+              src={`//localhost:3000/${iframeView}.html`}
+              className="iframe"
+              ref={iframeRef}
+              name="refresh_name"
+            />
+          )}
         </div>
         <div onMouseDown={onMouseDownRight} className="container-right-split" />
       </div>
