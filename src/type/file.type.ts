@@ -9,6 +9,7 @@ export type CodeType = {
   css: string
   script: string
   template: string
+  justRead: boolean
 }
 
 export type Catalog = {

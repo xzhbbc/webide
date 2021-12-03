@@ -25,6 +25,7 @@ let startY = 0
 let isMove = false
 const speed = 0.6
 let activeType = -1
+let path = ''
 export default function IndexPage() {
   const [htmlCode, setHtmlCode] = useState('')
   const [jsCode, setJsCode] = useState('')
@@ -51,7 +52,6 @@ export default function IndexPage() {
   const [treeData, setTreeData] = useState<Catalog[]>([])
   const [openKey, setOpenKey] = useState<string[]>([])
   const [selectKey, setSelectKey] = useState('')
-  const [path, setPath] = useState('')
   const [iframeView, setIframeView] = useState('')
   const midDomRef = useRef<HTMLDivElement>(null)
   const midUpDomRef = useRef<HTMLDivElement>(null)
@@ -188,18 +188,18 @@ export default function IndexPage() {
       console.log(editorHtmlCode)
       console.log(warpJs(editorJsCode))
       console.log(editorCssCode)
-      if (!query?.path) alert('获取不到文件')
+      if (!path) alert('获取不到文件')
       Loading.showLoading()
       const setCode = await post('/file/setCode', {
         html: editorHtmlCode,
         script: warpJs(editorJsCode),
         css: warpCss(editorCssCode),
-        name: query.path
+        name: path
       })
       console.log(setCode)
       Loading.closeLoading()
       // iframeRef?.current?.contentWindow?.location.reload()
-      getCode(query.path)
+      getCode(path)
       reloadIframe()
       // alert('监听到ctrl+s')
     }
@@ -219,40 +219,46 @@ export default function IndexPage() {
     })
     if (data.code === 0) {
       // eslint-disable-next-line prefer-const
-      let { template, script, css } = data.data
-      setHtmlCode(
-        initHtmlTmp(
-          template.replaceAll(
+      let { template, script, css, justRead } = data.data
+      if (!justRead) {
+        setHtmlCode(
+          initHtmlTmp(
+            template.replaceAll(
+              '\n',
+              `
+`
+            )
+          )
+        )
+        // console.log()
+        if (script.indexOf('\n') === 0) {
+          script = script.replace('\n', '')
+        }
+        setJsCode(
+          script.replaceAll(
             '\n',
             `
 `
           )
         )
-      )
-      // console.log()
-      if (script.indexOf('\n') === 0) {
-        script = script.replace('\n', '')
-      }
-      setJsCode(
-        script.replaceAll(
-          '\n',
-          `
+        if (css.indexOf('\n') === 0) {
+          css = css.replace('\n', '')
+        }
+        setCssCode(
+          css.replaceAll(
+            '\n',
+            `
 `
+          )
         )
-      )
-      if (css.indexOf('\n') === 0) {
-        css = css.replace('\n', '')
+        setEditorHtmlCode(initHtmlTmp(template))
+        setEditorJsCode(script)
+        setEditorCssCode(css)
+      } else {
+        setHtmlCode(template)
+        setJsCode(script)
+        setCssCode(css)
       }
-      setCssCode(
-        css.replaceAll(
-          '\n',
-          `
-`
-        )
-      )
-      setEditorHtmlCode(initHtmlTmp(template))
-      setEditorJsCode(script)
-      setEditorCssCode(css)
     }
     console.log(data)
     Loading.closeLoading()
@@ -285,6 +291,7 @@ export default function IndexPage() {
   useEffect(() => {
     if (query?.path) {
       getCode(query.path)
+      path = query.path
       getFileCatalog()
     }
     if (query?.name) {
@@ -355,13 +362,16 @@ export default function IndexPage() {
       const getParentFileList = getPathInfo.parent.split('/')
       const viewName = getParentFileList[getParentFileList.length - 1]
       setIframeView(viewName)
+      path = getPathInfo.path
       history.replaceState(
         {},
         '',
-        `/code?name=${viewName}&path=${getPathInfo.path}`
+        `/code?name=${viewName || query.name}&path=${getPathInfo.path}`
       )
       getCode(getPathInfo.path)
-      reloadIframe()
+      if (viewName) {
+        reloadIframe()
+      }
     }
   }
 

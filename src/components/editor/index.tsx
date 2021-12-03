@@ -34,8 +34,8 @@ const Editor: React.FC<IProps> = ({
   }
 
   useEffect(() => {
-    if (initCode) {
-      setCode(initCode)
+    if (initCode != code) {
+      setCode(initCode || '')
     }
   }, [initCode])
 
