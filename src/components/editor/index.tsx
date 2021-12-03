@@ -5,7 +5,7 @@ import './index.scss'
 type IProps = {
   width: number
   height: number
-  language: 'javascript' | 'css' | 'html'
+  language: 'javascript' | 'css' | 'html' | 'typescript'
   initCode?: string
   isDark?: boolean
   callback: (code: string) => void
@@ -39,12 +39,31 @@ const Editor: React.FC<IProps> = ({
     }
   }, [initCode])
 
+  const editorWillMount = (monaco: any) => {
+    if (language == 'typescript') {
+      monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+        target: monaco.languages.typescript.ScriptTarget.Latest,
+        allowNonTsExtensions: true,
+        moduleResolution:
+          monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+        module: monaco.languages.typescript.ModuleKind.CommonJS,
+        noEmit: true,
+        esModuleInterop: true,
+        jsx: monaco.languages.typescript.JsxEmit.React,
+        reactNamespace: 'React',
+        allowJs: true,
+        typeRoots: ['node_modules/@types']
+      })
+    }
+  }
+
   return (
     <div className="editorWrap">
       <div className="editorWrap-tip">{language}</div>
       <MonacoEditor
         language={language}
         theme={isDark ? 'vs-dark' : 'vs-light'}
+        editorWillMount={editorWillMount}
         value={code}
         width={width}
         height={height}

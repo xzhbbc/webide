@@ -1,4 +1,4 @@
-@import '../style/mixin';
+@import '../../style/mixin';
 
 .container {
   position: relative;
@@ -18,6 +18,7 @@
       cursor: e-resize;
       background: #000;
       z-index: 10000;
+      top: 0;
     }
     &-tree {
       width: calc(100% - 5px);

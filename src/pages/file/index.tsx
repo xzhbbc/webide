@@ -38,7 +38,7 @@ export default function FilePage() {
   }
 
   const goCode = useCallback((name: string, path: string) => {
-    history.push(`/code?name=${name}&path=${path}`)
+    history.push(`/vue?name=${name}&path=${path}`)
   }, [])
 
   return (

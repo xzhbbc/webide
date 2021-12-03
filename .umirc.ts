@@ -14,12 +14,8 @@ export default defineConfig({
   },
   routes: [
     { path: '/', component: '@/pages/file/index' },
-    { path: '/code', component: '@/pages/index', routes: [
-        {
-          path: '/',
-          microApp: 'vue'
-        }
-      ] }
+    { path: '/vue', component: '@/pages/code/vue/index' },
+    { path: '/jsx', component: '@/pages/code/jsx/index' }
   ],
   // mfsu: {},
   antd: {},

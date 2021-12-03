@@ -1,4 +1,4 @@
-import './index.scss'
+import '../index.scss'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Editor from '@/components/editor'
 import { initHtmlTmp, initJsTmp, warpCss, warpJs } from '@/constant'
@@ -13,29 +13,18 @@ import { DownOutlined } from '@ant-design/icons'
 // @ts-ignore
 import { MicroAppWithMemoHistory } from 'umi'
 import { DataNode, EventDataNode } from 'rc-tree/lib/interface'
+import useCodeMove from '@/hook/useCodeMove'
 
-enum ActiveMove {
-  LEFT,
-  RIGHT,
-  MID
-}
-
-let startX = 0
-let startY = 0
-let isMove = false
-const speed = 0.6
-let activeType = -1
 let path = ''
 export default function IndexPage() {
+  const [leftWidth, rightWidth, midMove, leftMoveFn, rightMoveFn, midMoveFn] =
+    useCodeMove()
   const [htmlCode, setHtmlCode] = useState('')
   const [jsCode, setJsCode] = useState('')
   const [cssCode, setCssCode] = useState('')
   const [editorHtmlCode, setEditorHtmlCode] = useState('')
   const [editorJsCode, setEditorJsCode] = useState('')
   const [editorCssCode, setEditorCssCode] = useState('')
-  const [leftWidth, setLeftWidth] = useState(200)
-  const [rightWidth, setRightWidth] = useState(400)
-  const [midMove, setMidMove] = useState(300)
   const [midScale, setMidScale] = useState({
     width: 0,
     height: 0
@@ -62,30 +51,6 @@ export default function IndexPage() {
   // @ts-ignore
   const { query } = useLocation()
 
-  const handlerMove = useCallback((e: MouseEvent) => {
-    if (!isMove) return
-    const disX = e.pageX - startX
-    const disY = e.pageY - startY
-    console.log(activeType)
-    if (activeType === ActiveMove.LEFT) {
-      const move = disX * speed + leftWidth
-      console.log(e, 'onMouseMoveLeft', disX, leftWidth)
-      // setLeftMove(move)
-      setLeftWidth(move)
-    } else if (activeType === ActiveMove.RIGHT) {
-      const move = -(disX * speed) + rightWidth
-      setRightWidth(move)
-    } else if (activeType === ActiveMove.MID) {
-      const move = disY * speed + midMove
-      setMidMove(move)
-    }
-  }, [])
-
-  const handlerUp = useCallback((e: MouseEvent) => {
-    // console.log('鼠标抬起了')
-    isMove = false
-  }, [])
-
   const watchWindowSize = useCallback(() => {
     if (midDomRef && midDomRef.current) {
       console.log(midDomRef.current.offsetWidth, midDomRef.current.offsetHeight)
@@ -111,34 +76,18 @@ export default function IndexPage() {
   }, [])
 
   useEffect(() => {
-    window.addEventListener('mouseup', handlerUp)
-    window.addEventListener('mousemove', handlerMove)
     window.addEventListener('resize', watchWindowSize)
     return () => {
-      window.removeEventListener('mouseup', handlerUp)
-      window.removeEventListener('mousemove', handlerMove)
-      window.addEventListener('resize', watchWindowSize)
+      window.removeEventListener('resize', watchWindowSize)
     }
   }, [])
 
-  const onMouseDownLeft = (e: React.MouseEvent<HTMLDivElement>) => {
-    // console.log(e, 'onMouseDown')
-    activeType = ActiveMove.LEFT
-    startX = e.pageX
-    isMove = true
-  }
+  const onMouseDownLeft = (e: React.MouseEvent<HTMLDivElement>) => leftMoveFn(e)
 
-  const onMouseDownRight = (e: React.MouseEvent<HTMLDivElement>) => {
-    activeType = ActiveMove.RIGHT
-    startX = e.pageX
-    isMove = true
-  }
+  const onMouseDownRight = (e: React.MouseEvent<HTMLDivElement>) =>
+    rightMoveFn(e)
 
-  const onMouseDownMid = (e: React.MouseEvent<HTMLDivElement>) => {
-    activeType = ActiveMove.MID
-    startY = e.pageY
-    isMove = true
-  }
+  const onMouseDownMid = (e: React.MouseEvent<HTMLDivElement>) => midMoveFn(e)
 
   useEffect(() => {
     if (midDomRef && midDomRef.current) {
@@ -366,7 +315,7 @@ export default function IndexPage() {
       history.replaceState(
         {},
         '',
-        `/code?name=${viewName || query.name}&path=${getPathInfo.path}`
+        `/vue?name=${viewName || query.name}&path=${getPathInfo.path}`
       )
       getCode(getPathInfo.path)
       if (viewName) {
