@@ -4,12 +4,11 @@ import './index.scss'
 import FileItem from '@/components/fileItem'
 import Loading from '@/utils/Loading'
 import { get } from '@/api/request'
-import { FileType } from '@/type/file.type'
-import * as path from 'path'
+import { ProjectType } from '@/type/file.type'
 
 export default function FilePage() {
   const [isCreate, setIsCreate] = useState(false)
-  const [fileList, setFileList] = useState<FileType[]>([])
+  const [fileList, setFileList] = useState<ProjectType[]>([])
 
   const createFile = useCallback((name: string) => {
     if (name) {
@@ -28,17 +27,19 @@ export default function FilePage() {
 
   const getData = async () => {
     Loading.showLoading()
-    const data = await get<{
-      fileList: FileType[]
-    }>('/file/getFileList', {})
+    const data = await get<ProjectType[]>('/file/getProject', {})
     if (data.code == 0) {
-      setFileList(data.data.fileList.reverse())
+      setFileList(data.data)
     }
     Loading.closeLoading()
   }
 
-  const goCode = useCallback((name: string, path: string) => {
-    history.push(`/vue?name=${name}&path=${path}`)
+  const goCode = useCallback((name: string, modelName: string) => {
+    if (modelName.indexOf('vue') > -1) {
+      history.push(`/vue?name=${name}`)
+    } else if (modelName.indexOf('react') > -1) {
+      history.push(`/jsx?name=${name}`)
+    }
   }, [])
 
   return (
@@ -53,16 +54,14 @@ export default function FilePage() {
           创建
         </div>
       </div>
-      {isCreate && (
-        <FileItem path="" createCallback={createFile} modelName="" />
-      )}
+      {isCreate && <FileItem modelName="" createCallback={createFile} />}
       {fileList.map(item => (
         <FileItem
-          key={item.fileName}
-          fileName={item.fileName}
+          key={item.projectName}
+          fileName={item.projectName}
           modelName={item.modelName}
           callback={goCode}
-          path={item.path}
+          // path={item.path}
         />
       ))}
     </div>

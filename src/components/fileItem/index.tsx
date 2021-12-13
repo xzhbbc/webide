@@ -6,7 +6,7 @@ type IProps = {
   modelName: string
   createCallback?: (value: string) => void
   callback?: (name: string, path: string) => void
-  path: string
+  // path: string
 }
 
 let dom: HTMLElement | null
@@ -14,8 +14,8 @@ const FileItem: React.FC<IProps> = ({
   fileName,
   modelName,
   createCallback,
-  callback,
-  path
+  callback
+  // path
 }) => {
   const [value, setValue] = useState('')
   const handler = (e: KeyboardEvent) => {
@@ -44,11 +44,11 @@ const FileItem: React.FC<IProps> = ({
   return (
     <div
       onClick={() => {
-        if (fileName) callback?.(fileName, path)
+        if (fileName) callback?.(fileName, modelName)
       }}
       className="fileContainer-item">
       <div className="fileContainer-item-text">
-        文件名：
+        项目：
         {fileName ? (
           fileName
         ) : (

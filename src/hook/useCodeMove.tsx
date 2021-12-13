@@ -5,7 +5,22 @@ enum ActiveMove {
   MID
 }
 
-type IProps = () => [
+let isMove = false
+const speed = 0.6
+let activeType = -1
+let startX = 0
+let startY = 0
+
+function useCodeMove(): [
+  number,
+  number,
+  (e: React.MouseEvent<HTMLDivElement>) => void,
+  (e: React.MouseEvent<HTMLDivElement>) => void
+]
+
+function useCodeMove(
+  midNeed: boolean
+): [
   number,
   number,
   number,
@@ -14,12 +29,7 @@ type IProps = () => [
   (e: React.MouseEvent<HTMLDivElement>) => void
 ]
 
-let isMove = false
-const speed = 0.6
-let activeType = -1
-let startX = 0
-let startY = 0
-const useCodeMove: IProps = () => {
+function useCodeMove(midNeed?: boolean) {
   const [leftWidth, setLeftWidth] = useState(200)
   const [rightWidth, setRightWidth] = useState(400)
   const [midMove, setMidMove] = useState(300)
@@ -75,7 +85,11 @@ const useCodeMove: IProps = () => {
     }
   }, [])
 
-  return [leftWidth, rightWidth, midMove, leftMoveFn, rightMoveFn, midMoveFn]
+  if (midNeed) {
+    return [leftWidth, rightWidth, midMove, leftMoveFn, rightMoveFn, midMoveFn]
+  } else {
+    return [leftWidth, rightWidth, leftMoveFn, rightMoveFn]
+  }
 }
 
 export default useCodeMove

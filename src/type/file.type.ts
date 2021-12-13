@@ -5,6 +5,11 @@ export type FileType = {
   parent: string
 }
 
+export type ProjectType = {
+  projectName: string
+  modelName: string
+}
+
 export type CodeType = {
   css: string
   script: string
@@ -17,5 +22,6 @@ export type Catalog = {
   type: string
   title: string
   key: string
+  path: string
   children?: Catalog[]
 }

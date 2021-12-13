@@ -14,17 +14,20 @@ import { DownOutlined } from '@ant-design/icons'
 import { MicroAppWithMemoHistory } from 'umi'
 import { DataNode, EventDataNode } from 'rc-tree/lib/interface'
 import useCodeMove from '@/hook/useCodeMove'
+import useWatchWindow from '@/hook/useWatchWindow'
+import EditorHelper from '@/utils/editor.helper'
 
 let path = ''
 export default function IndexPage() {
   const [leftWidth, rightWidth, midMove, leftMoveFn, rightMoveFn, midMoveFn] =
-    useCodeMove()
+    useCodeMove(true)
   const [htmlCode, setHtmlCode] = useState('')
   const [jsCode, setJsCode] = useState('')
   const [cssCode, setCssCode] = useState('')
   const [editorHtmlCode, setEditorHtmlCode] = useState('')
   const [editorJsCode, setEditorJsCode] = useState('')
   const [editorCssCode, setEditorCssCode] = useState('')
+  const [canRenderTree, setCanRenderTree] = useState(false)
   const [midScale, setMidScale] = useState({
     width: 0,
     height: 0
@@ -42,6 +45,7 @@ export default function IndexPage() {
   const [openKey, setOpenKey] = useState<string[]>([])
   const [selectKey, setSelectKey] = useState('')
   const [iframeView, setIframeView] = useState('')
+  const [showIframe, setShowIframe] = useState(false)
   const midDomRef = useRef<HTMLDivElement>(null)
   const midUpDomRef = useRef<HTMLDivElement>(null)
   const rightDomRef = useRef<HTMLDivElement>(null)
@@ -50,37 +54,6 @@ export default function IndexPage() {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const { query } = useLocation()
-
-  const watchWindowSize = useCallback(() => {
-    if (midDomRef && midDomRef.current) {
-      console.log(midDomRef.current.offsetWidth, midDomRef.current.offsetHeight)
-      setMidScale({
-        width: midDomRef.current.offsetWidth,
-        height: midDomRef.current.offsetHeight
-      })
-    }
-    if (midUpDomRef && midUpDomRef.current) {
-      // console.log(midUpDomRef.current.offsetWidth, midUpDomRef.current.offsetHeight)
-      setUpScale({
-        width: midUpDomRef.current.offsetWidth,
-        height: midUpDomRef.current.offsetHeight
-      })
-    }
-    if (rightDomRef && rightDomRef.current) {
-      // console.log(midUpDomRef.current.offsetWidth, midUpDomRef.current.offsetHeight)
-      setRightScale({
-        width: rightDomRef.current.offsetWidth,
-        height: rightDomRef.current.offsetHeight
-      })
-    }
-  }, [])
-
-  useEffect(() => {
-    window.addEventListener('resize', watchWindowSize)
-    return () => {
-      window.removeEventListener('resize', watchWindowSize)
-    }
-  }, [])
 
   const onMouseDownLeft = (e: React.MouseEvent<HTMLDivElement>) => leftMoveFn(e)
 
@@ -139,12 +112,36 @@ export default function IndexPage() {
       console.log(editorCssCode)
       if (!path) alert('获取不到文件')
       Loading.showLoading()
-      const setCode = await post('/file/setCode', {
-        html: editorHtmlCode,
-        script: warpJs(editorJsCode),
-        css: warpCss(editorCssCode),
-        name: path
-      })
+
+      const params = {
+        name: query.name + path
+      }
+
+      if (path.indexOf('.vue') > -1) {
+        Object.assign(params, {
+          html: editorHtmlCode,
+          script: warpJs(editorJsCode),
+          css: warpCss(editorCssCode)
+        })
+      } else if (
+        path.indexOf('scss') > -1 ||
+        path.indexOf('.css') > -1 ||
+        path.indexOf('.less') > -1
+      ) {
+        Object.assign(params, {
+          html: '',
+          script: '',
+          css: editorCssCode
+        })
+      } else {
+        Object.assign(params, {
+          html: '',
+          script: editorJsCode,
+          css: ''
+        })
+      }
+
+      const setCode = await post('/file/setCode', params)
       console.log(setCode)
       Loading.closeLoading()
       // iframeRef?.current?.contentWindow?.location.reload()
@@ -163,89 +160,93 @@ export default function IndexPage() {
 
   const getCode = async (name: string) => {
     Loading.showLoading()
-    const data = await get<CodeType>('/file/getCode', {
-      name
-    })
-    if (data.code === 0) {
-      // eslint-disable-next-line prefer-const
-      let { template, script, css, justRead } = data.data
-      if (!justRead) {
-        setHtmlCode(
-          initHtmlTmp(
-            template.replaceAll(
+    const getFileList = await getFileCatalog()
+    if (getFileList && getFileList.length > 0) {
+      const lastFile = getFileList[getFileList.length - 1]
+      if (!name) {
+        resetUrlPath(lastFile.path)
+        setSelectKey(`${lastFile.key}`)
+      } else {
+        if (query.path) {
+          const getFileData = EditorHelper.highlightPath(
+            getFileList,
+            query.path
+          )
+          if (getFileData) {
+            console.log(getFileData.key)
+            setSelectKey(`${getFileData.file.key}`)
+            setOpenKey(getFileData.key)
+          }
+        }
+      }
+      setCanRenderTree(true)
+      const data = await get<CodeType>('/file/getCode', {
+        name: `${query.name}/${name || lastFile.name}`
+      })
+      if (data.code === 0) {
+        // eslint-disable-next-line prefer-const
+        let { template, script, css, justRead } = data.data
+        if (!justRead) {
+          setHtmlCode(
+            initHtmlTmp(
+              template.replaceAll(
+                '\n',
+                `
+`
+              )
+            )
+          )
+          // console.log()
+          if (script.indexOf('\n') === 0) {
+            script = script.replace('\n', '')
+          }
+          setJsCode(
+            script.replaceAll(
               '\n',
               `
 `
             )
           )
-        )
-        // console.log()
-        if (script.indexOf('\n') === 0) {
-          script = script.replace('\n', '')
-        }
-        setJsCode(
-          script.replaceAll(
-            '\n',
-            `
+          if (css.indexOf('\n') === 0) {
+            css = css.replace('\n', '')
+          }
+          setCssCode(
+            css.replaceAll(
+              '\n',
+              `
 `
+            )
           )
-        )
-        if (css.indexOf('\n') === 0) {
-          css = css.replace('\n', '')
+          setEditorHtmlCode(initHtmlTmp(template))
+          setEditorJsCode(script)
+          setEditorCssCode(css)
+        } else {
+          setHtmlCode(template)
+          setJsCode(script)
+          setCssCode(css)
         }
-        setCssCode(
-          css.replaceAll(
-            '\n',
-            `
-`
-          )
-        )
-        setEditorHtmlCode(initHtmlTmp(template))
-        setEditorJsCode(script)
-        setEditorCssCode(css)
-      } else {
-        setHtmlCode(template)
-        setJsCode(script)
-        setCssCode(css)
       }
+      console.log(data)
     }
-    console.log(data)
     Loading.closeLoading()
   }
 
-  const getFileCatalog = async () => {
-    const data = await get<Catalog[]>('/file/getCatalog', {})
+  const getFileCatalog: () => Promise<Catalog[]> = async () => {
+    const data = await get<Catalog[]>('/file/getCatalog', {
+      name: query.name
+    })
     console.log(data)
     if (data.code == 0) {
-      // data.data.map(item => {
-      //
-      // })
-      const findItemFile = data.data.find(item => item.name == 'src')
-      const findItemView = findItemFile?.children?.find(
-        item => item.name == 'views'
-      )
-      const findFile = findItemView?.children?.find(
-        item => item.name == query?.name
-      )
-      if (findFile) {
-        if (findFile?.children) {
-          setSelectKey(`${findFile.children[0].key}`)
-        }
-        setOpenKey([findFile.key])
-      }
       setTreeData(data.data)
     }
+    return data?.data
   }
 
   useEffect(() => {
-    if (query?.path) {
-      getCode(query.path)
-      path = query.path
-      getFileCatalog()
-    }
-    if (query?.name) {
-      setIframeView(query.name)
-    }
+    getCode(query.path)
+    // if (query?.name) {
+    //   setIframeView(query.name)
+    // }
   }, [query])
 
   const setHtml = useCallback(
@@ -299,6 +300,7 @@ export default function IndexPage() {
   ) => {
     console.log('selected', keys, info, treeData)
     const getFileKey = info.node.key
+    const getOpenKey = openKey
     setSelectKey(`${getFileKey}`)
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -307,24 +309,53 @@ export default function IndexPage() {
       path: string
       parent: string
     }
+    console.log(getOpenKey, 'keyList===')
     if (getPathInfo.type === 'file') {
       const getParentFileList = getPathInfo.parent.split('/')
-      const viewName = getParentFileList[getParentFileList.length - 1]
-      setIframeView(viewName)
+      // const viewName = getParentFileList[getParentFileList.length - 1]
+      // setIframeView(viewName)
       path = getPathInfo.path
-      history.replaceState(
-        {},
-        '',
-        `/vue?name=${viewName || query.name}&path=${getPathInfo.path}`
-      )
+      resetUrlPath(path)
       getCode(getPathInfo.path)
-      if (viewName) {
-        reloadIframe()
-      }
+      // if (viewName) {
+      //   reloadIframe()
+      // }
     }
   }
 
-  console.log(query, 'query')
+  const resetUrlPath = (path: string) => {
+    history.replaceState({}, '', `/vue?name=${query.name}&path=${path}`)
+  }
+
+  useEffect(() => {
+    // runProject()
+    // return () => {
+    //   killProject()
+    // }
+  }, [query])
+
+  const runProject = async () => {
+    const run = await get('/file/setCmd', {
+      name: query.name
+    })
+    if (run.code == 0) {
+      setShowIframe(true)
+    } else {
+      setShowIframe(false)
+    }
+  }
+
+  const killProject = async () => {
+    const run = await get('/file/killProject', {
+      name: query.name
+    })
+  }
+
+  useWatchWindow(
+    [midDomRef, midUpDomRef, rightDomRef],
+    [setMidScale, setUpScale, setRightScale]
+  )
+
   return (
     <div className="container">
       <div
@@ -333,17 +364,15 @@ export default function IndexPage() {
           width: leftWidth
         }}>
         <Menu changeTheme={changeTheme} />
-        {treeData && treeData.length > 0 && (
+        {canRenderTree && treeData && treeData.length > 0 && (
           <Tree
             className="container-left-tree"
             showLine
             switcherIcon={<DownOutlined />}
-            checkStrictly
             defaultExpandedKeys={openKey}
-            selectedKeys={[selectKey]}
+            defaultSelectedKeys={[selectKey]}
             // expandedKeys={openKey}
             // expandedKeys={['0-10']}
-            // autoExpandParent
             onSelect={selectFile}
             treeData={treeData}
           />
@@ -358,13 +387,6 @@ export default function IndexPage() {
           }}
         />
       </div>
-      {/*<div*/}
-      {/*  onMouseMove={onMouseMove}*/}
-      {/*  onMouseDown={onMouseDown}*/}
-      {/*  onMouseOut={onMouseOut}*/}
-      {/*  className='container-split'>*/}
-      {/*  <div/>*/}
-      {/*</div>*/}
       <div
         className="container-mid"
         style={{
@@ -401,9 +423,6 @@ export default function IndexPage() {
           />
         </div>
       </div>
-      {/*<div className='container-split'>*/}
-      {/*  <div/>*/}
-      {/*</div>*/}
       <div
         style={{
           width: rightWidth
@@ -429,12 +448,12 @@ export default function IndexPage() {
           />
         </div>
         <div className="container-mid-down">
-          {iframeView && (
+          {showIframe && (
             <iframe
               allowFullScreen={true}
               frameBorder="0"
               sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-popups allow-modals allow-forms allow-top-navigation allow-presentation"
-              src={`//localhost:3000/${iframeView}.html`}
+              src={`//localhost:3003`}
               className="iframe"
               ref={iframeRef}
               name="refresh_name"
