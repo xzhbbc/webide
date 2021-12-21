@@ -16,6 +16,7 @@ import { DataNode, EventDataNode } from 'rc-tree/lib/interface'
 import useCodeMove from '@/hook/useCodeMove'
 import useWatchWindow from '@/hook/useWatchWindow'
 import EditorHelper from '@/utils/editor.helper'
+import useSaveFile from '@/hook/useSaveFile'
 
 let path = ''
 export default function IndexPage() {
@@ -45,6 +46,7 @@ export default function IndexPage() {
   const [openKey, setOpenKey] = useState<string[]>([])
   const [selectKey, setSelectKey] = useState('')
   const [iframeView, setIframeView] = useState('')
+  const [iframePort, setIframePort] = useState(80)
   const [showIframe, setShowIframe] = useState(false)
   const midDomRef = useRef<HTMLDivElement>(null)
   const midUpDomRef = useRef<HTMLDivElement>(null)
@@ -99,64 +101,6 @@ export default function IndexPage() {
   const reloadIframe = () => {
     window.open(iframeRef.current?.src, 'refresh_name', '')
   }
-
-  const handlerKeyDown = async (e: KeyboardEvent) => {
-    if (
-      (e.key == 's' || e.key == 'S') &&
-      (navigator.userAgent.match('Mac') ? e.metaKey : e.ctrlKey)
-    ) {
-      e.preventDefault()
-      console.log('保存中。。。')
-      console.log(editorHtmlCode)
-      console.log(warpJs(editorJsCode))
-      console.log(editorCssCode)
-      if (!path) alert('获取不到文件')
-      Loading.showLoading()
-
-      const params = {
-        name: query.name + path
-      }
-
-      if (path.indexOf('.vue') > -1) {
-        Object.assign(params, {
-          html: editorHtmlCode,
-          script: warpJs(editorJsCode),
-          css: warpCss(editorCssCode)
-        })
-      } else if (
-        path.indexOf('scss') > -1 ||
-        path.indexOf('.css') > -1 ||
-        path.indexOf('.less') > -1
-      ) {
-        Object.assign(params, {
-          html: '',
-          script: '',
-          css: editorCssCode
-        })
-      } else {
-        Object.assign(params, {
-          html: '',
-          script: editorJsCode,
-          css: ''
-        })
-      }
-
-      const setCode = await post('/file/setCode', params)
-      console.log(setCode)
-      Loading.closeLoading()
-      // iframeRef?.current?.contentWindow?.location.reload()
-      getCode(path)
-      reloadIframe()
-      // alert('监听到ctrl+s')
-    }
-  }
-
-  useEffect(() => {
-    document.addEventListener('keydown', handlerKeyDown)
-    return () => {
-      document.removeEventListener('keydown', handlerKeyDown)
-    }
-  }, [editorHtmlCode, editorJsCode, editorCssCode])
 
   const getCode = async (name: string) => {
     Loading.showLoading()
@@ -230,6 +174,8 @@ export default function IndexPage() {
     }
     Loading.closeLoading()
   }
+
+  useSaveFile(path, editorJsCode, getCode, editorHtmlCode, editorCssCode)
 
   const getFileCatalog: () => Promise<Catalog[]> = async () => {
     const data = await get<Catalog[]>('/file/getCatalog', {
@@ -335,11 +281,14 @@ export default function IndexPage() {
   }, [query])
 
   const runProject = async () => {
-    const run = await get('/file/setCmd', {
+    const run = await get<{
+      port: number
+    }>('/project/openService', {
       name: query.name
     })
     if (run.code == 0) {
       setShowIframe(true)
+      setIframePort(run.data.port)
     } else {
       setShowIframe(false)
     }
@@ -350,6 +299,10 @@ export default function IndexPage() {
       name: query.name
     })
   }
+
+  useEffect(() => {
+    runProject()
+  }, [])
 
   useWatchWindow(
     [midDomRef, midUpDomRef, rightDomRef],
@@ -453,7 +406,7 @@ export default function IndexPage() {
               allowFullScreen={true}
               frameBorder="0"
               sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-popups allow-modals allow-forms allow-top-navigation allow-presentation"
-              src={`//localhost:3003`}
+              src={`//localhost:${iframePort}`}
               className="iframe"
               ref={iframeRef}
               name="refresh_name"

@@ -6,8 +6,10 @@ export type FileType = {
 }
 
 export type ProjectType = {
-  projectName: string
-  modelName: string
+  name: string
+  user: string
+  createTime: number
+  updateTime: number
 }
 
 export type CodeType = {

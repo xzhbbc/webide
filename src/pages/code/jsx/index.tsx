@@ -6,13 +6,13 @@ import useCodeMove from '@/hook/useCodeMove'
 import useWatchWindow from '@/hook/useWatchWindow'
 import { get } from '@/api/request'
 import { useLocation } from 'umi'
-import { Catalog, CodeType } from '@/type/file.type';
+import { Catalog, CodeType } from '@/type/file.type'
 import { Tree } from 'antd'
 import { DownOutlined } from '@ant-design/icons'
-import { DataNode, EventDataNode } from 'rc-tree/lib/interface';
-import Loading from '@/utils/Loading';
-import EditorHelper from '@/utils/editor.helper';
-import { initHtmlTmp } from '@/constant';
+import { DataNode, EventDataNode } from 'rc-tree/lib/interface'
+import Loading from '@/utils/Loading'
+import EditorHelper from '@/utils/editor.helper'
+import useSaveFile from '@/hook/useSaveFile'
 
 let path = ''
 const Index = () => {
@@ -26,6 +26,7 @@ const Index = () => {
   const [editorCode, setEditorCode] = useState('')
   const [isDark, setIsDark] = useState(true)
   const [showIframe, setShowIframe] = useState(false)
+  const [iframePort, setIframePort] = useState(80)
   const [treeData, setTreeData] = useState<Catalog[]>([])
   const [canRenderTree, setCanRenderTree] = useState(false)
   const [openKey, setOpenKey] = useState<string[]>([])
@@ -97,7 +98,7 @@ const Index = () => {
         name: `${query.name}/${name || lastFile.name}`
       })
       if (data.code === 0) {
-        let { template, script, css, justRead } = data.data
+        const { template, script, css, justRead } = data.data
         if (script) {
           setCode(script)
         }
@@ -107,15 +108,22 @@ const Index = () => {
   }
 
   const runProject = async () => {
-    const run = await get('/file/setCmd', {
+    const run = await get<{
+      port: number
+    }>('/project/openService', {
       name: query.name
     })
     if (run.code == 0) {
       setShowIframe(true)
+      setIframePort(run.data.port)
     } else {
       setShowIframe(false)
     }
   }
+
+  useEffect(() => {
+    runProject()
+  }, [])
 
   const getFileCatalog: () => Promise<Catalog[]> = async () => {
     const data = await get<Catalog[]>('/file/getCatalog', {
@@ -166,6 +174,8 @@ const Index = () => {
   const resetUrlPath = (path: string) => {
     history.replaceState({}, '', `/jsx?name=${query.name}&path=${path}`)
   }
+
+  useSaveFile(path, editorCode, getCode)
 
   return (
     <div className="container">
@@ -219,26 +229,17 @@ const Index = () => {
           width: viewWidth
         }}
         className="container-right">
-        <iframe
-          allowFullScreen={true}
-          frameBorder="0"
-          sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-popups allow-modals allow-forms allow-top-navigation allow-presentation"
-          src={`//localhost:3004`}
-          className="iframe"
-          ref={iframeRef}
-          name="refresh_name"
-        />
-        {/*{showIframe && (*/}
-        {/*  <iframe*/}
-        {/*    allowFullScreen={true}*/}
-        {/*    frameBorder="0"*/}
-        {/*    sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-popups allow-modals allow-forms allow-top-navigation allow-presentation"*/}
-        {/*    src={`//localhost:3004`}*/}
-        {/*    className="iframe"*/}
-        {/*    ref={iframeRef}*/}
-        {/*    name="refresh_name"*/}
-        {/*  />*/}
-        {/*)}*/}
+        {showIframe && (
+          <iframe
+            allowFullScreen={true}
+            frameBorder="0"
+            sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-popups allow-modals allow-forms allow-top-navigation allow-presentation"
+            src={`//localhost:${iframePort}`}
+            className="iframe"
+            ref={iframeRef}
+            name="refresh_name"
+          />
+        )}
         <div onMouseDown={onMouseRight} className="container-right-split" />
       </div>
     </div>

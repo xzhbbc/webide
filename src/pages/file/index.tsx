@@ -27,7 +27,7 @@ export default function FilePage() {
 
   const getData = async () => {
     Loading.showLoading()
-    const data = await get<ProjectType[]>('/file/getProject', {})
+    const data = await get<ProjectType[]>('/project/getProject', {})
     if (data.code == 0) {
       setFileList(data.data)
     }
@@ -57,9 +57,9 @@ export default function FilePage() {
       {isCreate && <FileItem modelName="" createCallback={createFile} />}
       {fileList.map(item => (
         <FileItem
-          key={item.projectName}
-          fileName={item.projectName}
-          modelName={item.modelName}
+          key={item.name}
+          fileName={item.name}
+          modelName={''}
           callback={goCode}
           // path={item.path}
         />
