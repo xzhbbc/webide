@@ -6,7 +6,7 @@ type ResponseData<T> = {
   msg: string
 }
 
-axios.defaults.baseURL = '//localhost:4000'
+axios.defaults.baseURL = '//localhost:4500'
 axios.defaults.timeout = 50000
 
 axios.interceptors.request.use(config => {

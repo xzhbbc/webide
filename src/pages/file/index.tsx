@@ -35,6 +35,7 @@ export default function FilePage() {
   }
 
   const goCode = useCallback((name: string, modelName: string) => {
+    console.log('click===')
     if (modelName.indexOf('vue') > -1) {
       history.push(`/vue?name=${name}`)
     } else if (modelName.indexOf('react') > -1) {
@@ -59,7 +60,7 @@ export default function FilePage() {
         <FileItem
           key={item.name}
           fileName={item.name}
-          modelName={''}
+          modelName={item.modelName}
           callback={goCode}
           // path={item.path}
         />

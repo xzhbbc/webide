@@ -8,6 +8,7 @@ export type FileType = {
 export type ProjectType = {
   name: string
   user: string
+  modelName: string
   createTime: number
   updateTime: number
 }
