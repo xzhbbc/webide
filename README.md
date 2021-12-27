@@ -24,9 +24,9 @@ git clone https://github.com/xzhbbc/webside-service.git
 - [x] 热更
 - [x] 项目文件查看
 - [x] 文件修改
-- [ ] 创建文件
+- [x] 创建文件
 - [ ] 多人同时在线编辑
-- [ ] 项目创建
+- [x] 项目创建
 
 ![avatar](./demo.gif)
 
