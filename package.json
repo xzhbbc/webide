@@ -12,24 +12,18 @@
     "lint:prettier": "prettier --check \"**/*\" --end-of-line auto",
     "lint-staged": "lint-staged",
     "lint-staged:js": "eslint --ext .js,.jsx,.ts,.tsx ",
-    "lint:fix": "eslint --fix --cache --ext .js,.jsx,.ts,.tsx --format=pretty ./src && npm run lint:style",
-    "lint:js": "eslint --cache --ext .js,.jsx,.ts,.tsx --format=pretty ./src",
-    "lint:style": "stylelint --fix \"src/**/*.less\" --syntax less"
+    "lint:fix": "eslint --fix --cache --ext .js,.jsx,.ts,.tsx --format=pretty ./src",
+    "lint:js": "eslint --cache --ext .js,.jsx,.ts,.tsx --format=pretty ./src"
   },
   "gitHooks": {
     "pre-commit": "lint-staged"
   },
   "lint-staged": {
-    "**/*.less": "stylelint --syntax less",
-    "**/*.{js,jsx,ts,tsx}": "npm run lint-staged:js",
-    "**/*.{js,jsx,tsx,ts,less,md,json}": [
-      "prettier --write",
-      "git add"
-    ]
+    "src/**/*.{js,ts,tsx}": "eslint --fix"
   },
   "dependencies": {
     "@ant-design/pro-layout": "^6.5.0",
-    "antd": "^4.16.13",
+    "antd": "^4.17.4",
     "axios": "^0.24.0",
     "node-sass": "^6.0.1",
     "react": "17.x",

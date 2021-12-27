@@ -29,3 +29,5 @@ git clone https://github.com/xzhbbc/webside-service.git
 - [ ] 项目创建
 
 ![avatar](./demo.gif)
+
+![avatar](./demo1.gif)

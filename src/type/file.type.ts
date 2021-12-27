@@ -8,9 +8,23 @@ export type FileType = {
 export type ProjectType = {
   name: string
   user: string
-  modelName: string
   createTime: number
   updateTime: number
+  scaffold: Scaffold
+}
+
+export type Scaffold = {
+  fileModelName: string
+  id: string
+  modelName: string
+  scaffoldName: string
+}
+
+export type ScaffoldList = {
+  id: string
+  modelName: string
+  scaffoldName: string
+  fileModelName: string
 }
 
 export type CodeType = {
