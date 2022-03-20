@@ -1,8 +1,9 @@
 import { DownSquareTwoTone, UpSquareTwoTone } from '@ant-design/icons'
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import './index.scss'
+import _ from 'lodash'
 
-const speed = 0.6
+const speed = 0.7
 let isMove = false
 let startY = 0
 const Console = () => {
@@ -10,16 +11,22 @@ const Console = () => {
   const [consoleHeight, setConsoleHeight] = useState(500)
   // const startY = useRef(0)
 
-  const moveTab = useCallback(
+  const throttleMove = _.throttle(
     (e: MouseEvent) => {
       if (!isOpen || !isMove) return
-      console.log(e.pageY, 'move', startY)
+      // console.log(e.pageY, 'move', startY, isOpen, isMove)
       const disY = e.pageY - startY
       const move = -disY * speed + consoleHeight
       setConsoleHeight(move)
     },
-    [isOpen, consoleHeight]
+    200,
+    {
+      leading: true,
+      trailing: false
+    }
   )
+
+  const moveTab = useCallback(throttleMove, [isOpen, consoleHeight])
 
   const downTab = (e: React.MouseEvent<HTMLDivElement>) => {
     isMove = true
@@ -28,6 +35,7 @@ const Console = () => {
   }
 
   const upTab = useCallback(() => {
+    console.log('isUp')
     isMove = false
   }, [isOpen])
 
@@ -38,7 +46,7 @@ const Console = () => {
       window.removeEventListener('mouseup', upTab)
       window.removeEventListener('mousemove', moveTab)
     }
-  }, [])
+  }, [isOpen])
 
   return (
     <div className="console">
@@ -54,6 +62,26 @@ const Console = () => {
       </div>
       {isOpen && (
         <div style={{ height: consoleHeight }} className="content">
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
+          <div className="item">1234</div>
           <div className="item">1234</div>
         </div>
       )}

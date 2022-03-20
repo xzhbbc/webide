@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import _ from 'lodash'
+
 enum ActiveMove {
   LEFT,
   RIGHT,
@@ -34,24 +36,33 @@ function useCodeMove(midNeed?: boolean) {
   const [rightWidth, setRightWidth] = useState(400)
   const [midMove, setMidMove] = useState(300)
 
-  const handlerMove = useCallback((e: MouseEvent) => {
-    if (!isMove) return
-    const disX = e.pageX - startX
-    const disY = e.pageY - startY
-    // console.log(activeType)
-    if (activeType === ActiveMove.LEFT) {
-      const move = disX * speed + leftWidth
-      console.log(e, 'onMouseMoveLeft', disX, leftWidth)
-      // setLeftMove(move)
-      setLeftWidth(move)
-    } else if (activeType === ActiveMove.RIGHT) {
-      const move = -(disX * speed) + rightWidth
-      setRightWidth(move)
-    } else if (activeType === ActiveMove.MID) {
-      const move = disY * speed + midMove
-      setMidMove(move)
+  const throttleMove = _.throttle(
+    (e: MouseEvent) => {
+      if (!isMove) return
+      const disX = e.pageX - startX
+      const disY = e.pageY - startY
+      // console.log(activeType)
+      if (activeType === ActiveMove.LEFT) {
+        const move = disX * speed + leftWidth
+        console.log(e, 'onMouseMoveLeft', disX, leftWidth)
+        // setLeftMove(move)
+        setLeftWidth(move)
+      } else if (activeType === ActiveMove.RIGHT) {
+        const move = -(disX * speed) + rightWidth
+        setRightWidth(move)
+      } else if (activeType === ActiveMove.MID) {
+        const move = disY * speed + midMove
+        setMidMove(move)
+      }
+    },
+    200,
+    {
+      leading: true,
+      trailing: false
     }
-  }, [])
+  )
+
+  const handlerMove = useCallback(throttleMove, [])
 
   const handlerUp = useCallback((e: MouseEvent) => {
     // console.log('鼠标抬起了')
