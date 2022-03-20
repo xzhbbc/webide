@@ -1,0 +1,38 @@
+.console {
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  .titleBar {
+    height: 28px;
+    border-bottom: #4d4d4d;
+    background: hsl(220 18% 10%);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-content: center;
+    cursor: n-resize;
+    .tab {
+      width: 65px;
+      font-size: 12px;
+      border-bottom: 1px solid #3677f6;
+      color: #ccc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .icon {
+      padding-right: 10px;
+      cursor: pointer;
+    }
+  }
+  .content {
+    width: 100%;
+    background: hsl(220 18% 10%);
+    .item {
+      padding: 4px 10px 3px 24px;
+      border-bottom: 1px solid #ffffff2e;
+      color: #ccc;
+      font-size: 11px;
+    }
+  }
+}

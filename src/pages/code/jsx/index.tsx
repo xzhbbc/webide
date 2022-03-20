@@ -13,6 +13,7 @@ import { DataNode, EventDataNode } from 'rc-tree/lib/interface'
 import Loading from '@/utils/Loading'
 import EditorHelper from '@/utils/editor.helper'
 import useSaveFile from '@/hook/useSaveFile'
+import Console from '@/components/console'
 
 let path = ''
 const Index = () => {
@@ -240,6 +241,7 @@ const Index = () => {
             name="refresh_name"
           />
         )}
+        <Console />
         <div onMouseDown={onMouseRight} className="container-right-split" />
       </div>
     </div>
